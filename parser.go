@@ -13,6 +13,47 @@ type Parser struct {
 	SkipClaimsValidation bool     // Skip claims validation during token parsing
 }
 
+// ParserOption applies parser configuration
+type ParserOption interface {
+	Apply(*Parser)
+}
+
+type parserOptionFn func(*Parser)
+
+func (f parserOptionFn) Apply(p *Parser) {
+	f(p)
+}
+
+// ValidMethods is a ParserOption. see documentation of Parser.ValidMethods for details.
+func ValidMethods(methods []string) ParserOption {
+	return parserOptionFn(func(p *Parser) {
+		p.ValidMethods = methods
+	})
+}
+
+// UseJSONNumber is a ParserOption. see documentation of Parser.UseJSONNumber for details.
+func UseJSONNumber() ParserOption {
+	return parserOptionFn(func(p *Parser) {
+		p.UseJSONNumber = true
+	})
+}
+
+// SkipClaimsValidation is a ParserOption. see documentation of Parser.SkipClaimsValidation for details.
+func SkipClaimsValidation() ParserOption {
+	return parserOptionFn(func(p *Parser) {
+		p.SkipClaimsValidation = true
+	})
+}
+
+// NewParser makes new Parser and applies options
+func NewParser(options ...ParserOption) *Parser {
+	p := new(Parser)
+	for _, option := range options {
+		option.Apply(p)
+	}
+	return p
+}
+
 // Parse, validate, and return a token.
 // keyFunc will receive the parsed token and should return the key for validating.
 // If everything is kosher, err will be nil
